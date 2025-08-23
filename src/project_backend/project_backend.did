@@ -1,3 +1,26 @@
+// ========== Type Definitions ==========
+type PropertyId = nat;
+type Timestamp = nat64;
+type LeaseId = nat;
+type PaymentId = nat;
+
+type UserInvestment = record {
+  property_id : PropertyId;
+  shares_owned : nat;
+};
+
+type UserData = record {
+  total_investment : nat;
+  current_value : nat;
+  monthly_income : nat;
+  total_return : nat;
+  user_registered_properties : vec PropertyId;
+  user_invested_properties : vec UserInvestment;
+};
+
+// ========== Service ==========
 service : {
-    "greet": (text) -> (text) query;
+  register_user : () -> (text);
+  get_user_data : () -> (UserData);
 }
+

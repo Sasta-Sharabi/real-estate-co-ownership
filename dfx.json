@@ -24,7 +24,13 @@
         "src/project_frontend/dist"
       ],
       "type": "assets",
-      "workspace": "project_frontend"
+      "workspace": "project_frontend",
+      "csp": {
+      "img-src": ["'self'", "data:", "https://images.pexels.com", "https:"]
+      },
+      "headers": {
+      "Permissions-Policy": "camera=(), microphone=(), geolocation=(), fullscreen=(self)"
+      }
     }
   },
   "defaults": {
