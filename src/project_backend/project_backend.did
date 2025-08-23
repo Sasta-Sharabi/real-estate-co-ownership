@@ -18,9 +18,57 @@ type UserData = record {
   user_invested_properties : vec UserInvestment;
 };
 
+type PropertyAddress = record {
+  street : text;
+  city : text;
+  state : text;
+  zipcode : nat;
+};
+
+type PropertyFinancialDetails = record {
+  total_property_value : nat;
+  available_shares : nat;
+  price_per_share : nat;
+};
+
+type PropertyType = variant {
+  Residential;
+  Industrial;
+  Commercial;
+  MixedUse;
+};
+
+type Amenity = variant {
+  Parking;
+  Pool;
+  Gym;
+  Security;
+  Garden;
+  Balcony;
+  AirConditioning;
+  Heating;
+  Elevator;
+  Storage;
+};
+
+type Property = record {
+  id : PropertyId;
+  title : text;
+  property_type : PropertyType;
+  address : PropertyAddress;
+  financial_details : PropertyFinancialDetails;
+  property_description : text;
+  amenities : vec Amenity;
+  images : vec text;
+  monthly_rent : nat;
+  collected_rent : nat;
+  investors : vec record { principal; nat };
+  owner : principal;
+};
+
 // ========== Service ==========
 service : {
   register_user : () -> (text);
   get_user_data : () -> (UserData);
-}
-
+  register_property : (text, text, text, text, nat64, text, nat, nat, nat, text, vec text, vec text, nat) -> (text);
+};

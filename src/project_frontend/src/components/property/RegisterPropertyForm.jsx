@@ -1,35 +1,52 @@
 import React, { useState } from 'react';
-import { Building, MapPin, DollarSign, Users, Calendar, Upload } from 'lucide-react';
+import { Building, MapPin, DollarSign, Image as ImageIcon } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthProvider';
 
 const RegisterPropertyForm = () => {
+  const { callFunction } = useAuth();
+
   const [formData, setFormData] = useState({
     title: '',
     address: '',
     city: '',
     state: '',
     zipCode: '',
-    propertyType: 'residential',
+    propertyType: 'Residential',
     totalValue: '',
     availableShares: '',
     pricePerShare: '',
     description: '',
     amenities: [],
-    images: []
+    images: [],
+    monthlyRent: ''
   });
 
   const [loading, setLoading] = useState(false);
 
   const propertyTypes = [
-    { value: 'residential', label: 'Residential' },
-    { value: 'commercial', label: 'Commercial' },
-    { value: 'industrial', label: 'Industrial' },
-    { value: 'mixed-use', label: 'Mixed Use' }
+    { value: 'Residential', label: 'Residential' },
+    { value: 'Commercial', label: 'Commercial' },
+    { value: 'Industrial', label: 'Industrial' },
+    { value: 'MixedUse', label: 'Mixed Use' }
   ];
 
   const amenityOptions = [
-    'Parking', 'Pool', 'Gym', 'Security', 'Garden', 'Balcony', 
+    'Parking', 'Pool', 'Gym', 'Security', 'Garden', 'Balcony',
     'Air Conditioning', 'Heating', 'Elevator', 'Storage'
   ];
+
+  const amenityMap = {
+    'Air Conditioning': 'AirConditioning',
+    'Parking': 'Parking',
+    'Pool': 'Pool',
+    'Gym': 'Gym',
+    'Security': 'Security',
+    'Garden': 'Garden',
+    'Balcony': 'Balcony',
+    'Heating': 'Heating',
+    'Elevator': 'Elevator',
+    'Storage': 'Storage'
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -53,11 +70,29 @@ const RegisterPropertyForm = () => {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Property registered:', formData);
-      alert('Property registered successfully!');
-      
+      if (!callFunction) throw new Error("callFunction not connected");
+
+      const amenitiesEnum = formData.amenities.map(a => amenityMap[a]) || [];
+
+      const response = await callFunction.register_property(
+        formData.title,
+        formData.address,
+        formData.city,
+        formData.state,
+        Number(formData.zipCode),
+        formData.propertyType,
+        BigInt(formData.totalValue),
+        BigInt(formData.availableShares),
+        BigInt(formData.pricePerShare),
+        formData.description,
+        amenitiesEnum,
+        formData.images,
+        BigInt(formData.monthlyRent || 0)
+      );
+
+      console.log(response);
+      alert(response);
+
       // Reset form
       setFormData({
         title: '',
@@ -65,16 +100,18 @@ const RegisterPropertyForm = () => {
         city: '',
         state: '',
         zipCode: '',
-        propertyType: 'residential',
+        propertyType: 'Residential',
         totalValue: '',
         availableShares: '',
         pricePerShare: '',
         description: '',
         amenities: [],
-        images: []
+        images: [],
+        monthlyRent: ''
       });
-    } catch (error) {
-      alert('Error registering property. Please try again.');
+    } catch (err) {
+      console.error(err);
+      alert('Error registering property: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -134,18 +171,16 @@ const RegisterPropertyForm = () => {
               <MapPin className="h-5 w-5 text-gray-500" />
               <h3 className="text-lg font-medium text-gray-900">Address</h3>
             </div>
-            
-            <div>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Street address"
-                required
-              />
-            </div>
+
+            <input
+              type="text"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Street address"
+              required
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <input
@@ -249,6 +284,29 @@ const RegisterPropertyForm = () => {
             />
           </div>
 
+          {/* Image URLs */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Image URLs (comma-separated)
+            </label>
+            <div className="flex items-center space-x-2 mb-1">
+              <ImageIcon className="h-5 w-5 text-gray-500" />
+              <input
+                type="text"
+                name="images"
+                value={formData.images.join(',')}
+                onChange={(e) =>
+                  setFormData(prev => ({
+                    ...prev,
+                    images: e.target.value.split(',').map(url => url.trim()).filter(Boolean)
+                  }))
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
+              />
+            </div>
+          </div>
+
           {/* Amenities */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -269,6 +327,22 @@ const RegisterPropertyForm = () => {
             </div>
           </div>
 
+          {/* Monthly Rent */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Monthly Rent ($)
+            </label>
+            <input
+              type="number"
+              name="monthlyRent"
+              value={formData.monthlyRent}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="3000"
+              required
+            />
+          </div>
+
           {/* Submit Button */}
           <div className="flex justify-end pt-6 border-t border-gray-200">
             <button
@@ -286,3 +360,4 @@ const RegisterPropertyForm = () => {
 };
 
 export default RegisterPropertyForm;
+
