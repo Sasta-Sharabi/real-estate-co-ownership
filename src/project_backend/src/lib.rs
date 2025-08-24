@@ -307,3 +307,31 @@ pub fn register_property(
         format!("Property registered successfully with id: {}", id)
     })
 }
+
+
+#[ic_cdk::query]
+pub fn get_all_properties() -> Vec<Property> {
+    STATE.with(|s| {
+        let state = s.borrow();
+        state.all_properties.clone()
+    })
+}
+
+#[ic_cdk::query]
+pub fn get_user_registered_properties() -> Vec<Property> {
+    let user = caller();
+
+    STATE.with(|s| {
+        let state = s.borrow();
+        if let Some(user_data) = state.all_users.get(&user) {
+            // collect properties by ID
+            state.all_properties
+                .iter()
+                .filter(|p| user_data.user_registered_properties.contains(&p.id))
+                .cloned()
+                .collect()
+        } else {
+            vec![]
+        }
+    })
+}

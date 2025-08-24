@@ -22,7 +22,7 @@ type PropertyAddress = record {
   street : text;
   city : text;
   state : text;
-  zipcode : nat;
+  zipcode : nat64;
 };
 
 type PropertyFinancialDetails = record {
@@ -71,4 +71,6 @@ service : {
   register_user : () -> (text);
   get_user_data : () -> (UserData);
   register_property : (text, text, text, text, nat64, text, nat, nat, nat, text, vec text, vec text, nat) -> (text);
+  get_all_properties : () -> (vec Property) query;
+  get_user_registered_properties : () -> (vec Property) query;
 };

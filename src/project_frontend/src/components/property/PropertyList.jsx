@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building, MapPin, DollarSign, Users, Eye, Filter } from 'lucide-react';
+import { Building, MapPin, Eye, Filter } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthProvider'; // adjust import path if different
 
 const PropertyList = () => {
   const [properties, setProperties] = useState([]);
@@ -8,59 +9,65 @@ const PropertyList = () => {
   const [filter, setFilter] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
 
-  // Mock data
-  const mockProperties = [
-    {
-      id: 1,
-      title: 'Modern Downtown Apartment',
-      address: '123 Main St, New York, NY 10001',
-      propertyType: 'residential',
-      totalValue: 500000,
-      availableShares: 75,
-      totalShares: 100,
-      pricePerShare: 5000,
-      monthlyRent: 3500,
-      images: ['/building.png'],
-      amenities: ['Parking', 'Gym', 'Security'],
-      createdAt: '2024-01-15'
-    },
-    {
-      id: 2,
-      title: 'Commercial Office Space',
-      address: '456 Business Ave, Los Angeles, CA 90210',
-      propertyType: 'commercial',
-      totalValue: 1200000,
-      availableShares: 40,
-      totalShares: 120,
-      pricePerShare: 10000,
-      monthlyRent: 8500,
-      images: ['popular.png'],
-      amenities: ['Parking', 'Security', 'Elevator'],
-      createdAt: '2024-01-10'
-    },
-    {
-      id: 3,
-      title: 'Luxury Beachfront Condo',
-      address: '789 Ocean Dr, Miami, FL 33139',
-      propertyType: 'residential',
-      totalValue: 800000,
-      availableShares: 20,
-      totalShares: 80,
-      pricePerShare: 10000,
-      monthlyRent: 5500,
-      images: ['/residential.png'],
-      amenities: ['Pool', 'Gym', 'Security', 'Balcony'],
-      createdAt: '2024-01-05'
-    }
-  ];
+  const { callFunction } = useAuth();
+
+  // Utility to safely convert BigInt → Number
+  const toNum = (val) => {
+    if (typeof val === "bigint") return Number(val);
+    return Number(val ?? 0);
+  };
+
+  // Extracts property_type from { Residential: null }
+  const parsePropertyType = (ptype) => {
+    if (!ptype) return "unknown";
+    const key = Object.keys(ptype)[0] || "unknown";
+    return key.toLowerCase();
+  };
+
+  // Map backend property object to frontend format
+  const mapProperty = (p) => {
+    return {
+      id: toNum(p.id),
+      title: p.title,
+      address: `${p.address.street}, ${p.address.city}, ${p.address.state} ${toNum(p.address.zipcode)}`,
+      propertyType: parsePropertyType(p.property_type),
+      totalValue: toNum(p.financial_details.total_property_value),
+      availableShares: toNum(p.financial_details.available_shares),
+      totalShares:
+        toNum(p.financial_details.total_property_value) /
+        toNum(p.financial_details.price_per_share),
+      pricePerShare: toNum(p.financial_details.price_per_share),
+      monthlyRent: toNum(p.monthly_rent),
+      images: p.images && p.images.length > 0 ? p.images : ['/building.png'],
+      amenities: p.amenities ? p.amenities.map(a => Object.keys(a)[0]) : [],
+      createdAt: new Date().toISOString(), // backend doesn’t provide createdAt yet
+    };
+  };
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setProperties(mockProperties);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const fetchProperties = async () => {
+      setLoading(true);
+      try {
+        if (callFunction?.get_all_properties) {
+          console.log("Fetching properties from backend...");
+          const backendProps = await callFunction.get_all_properties();
+          console.log("Raw backend properties:", backendProps);
+          const mapped = backendProps.map(mapProperty);
+          setProperties(mapped);
+        } else {
+          console.warn("get_all_properties not available in callFunction");
+          setProperties([]);
+        }
+      } catch (err) {
+        console.error("Error fetching properties:", err);
+        setProperties([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProperties();
+  }, [callFunction]);
 
   const filteredProperties = properties.filter(property => {
     if (filter === 'all') return true;
@@ -140,7 +147,7 @@ const PropertyList = () => {
               <option value="residential">Residential</option>
               <option value="commercial">Commercial</option>
               <option value="industrial">Industrial</option>
-              <option value="mixed-use">Mixed Use</option>
+              <option value="mixeduse">Mixed Use</option>
             </select>
           </div>
 
@@ -164,7 +171,6 @@ const PropertyList = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {sortedProperties.map(property => (
           <div key={property.id} className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            {/* Property Image */}
             <div className="relative h-48 overflow-hidden rounded-t-lg">
               <img
                 src={property.images[0]}
@@ -178,7 +184,6 @@ const PropertyList = () => {
               </div>
             </div>
 
-            {/* Property Details */}
             <div className="p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">{property.title}</h3>
               
@@ -204,7 +209,6 @@ const PropertyList = () => {
                 </div>
               </div>
 
-              {/* Availability */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm text-gray-600">Available Shares:</span>
@@ -220,7 +224,6 @@ const PropertyList = () => {
                 </div>
               </div>
 
-              {/* Amenities */}
               <div className="mb-4">
                 <div className="flex flex-wrap gap-1">
                   {property.amenities.slice(0, 3).map(amenity => (
@@ -236,7 +239,6 @@ const PropertyList = () => {
                 </div>
               </div>
 
-              {/* Action Button */}
               <Link
                 to={`/properties/${property.id}`}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
