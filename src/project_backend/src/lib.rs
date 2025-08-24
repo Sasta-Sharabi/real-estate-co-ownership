@@ -89,7 +89,7 @@ pub fn get_user_data() -> UserData {
         // Mutable borrow to insert default user
         let mut state = s.borrow_mut();
         let default_data = UserData {
-            total_investment: 2,
+            total_investment: 0,
             current_value: 0,
             monthly_income: 0,
             total_return: 0,
@@ -304,6 +304,7 @@ pub fn register_property(
             user_invested_properties: vec![],
         });
         user.user_registered_properties.push(id);
+        user.monthly_income += monthly_rent;
 
         save_state(&state);
 
@@ -436,5 +437,75 @@ pub fn get_my_leases() -> Vec<Lease> {
     })
 }
 
+#[ic_cdk::update]
+pub fn buy_share(property_id: PropertyId, shares_to_buy: u128) -> String {
+    if shares_to_buy == 0 {
+        return "Cannot buy zero shares".to_string();
+    }
+
+    let buyer = caller();
+
+    STATE.with(|s| {
+        let mut state = s.borrow_mut();
+
+        // Find the property
+        let property = match state.all_properties.iter_mut().find(|p| p.id == property_id) {
+            Some(p) => p,
+            None => return "Property not found".to_string(),
+        };
+
+        // Check if enough shares are available
+        if property.financial_details.available_shares < shares_to_buy {
+            return format!(
+                "Not enough shares available. Only {} shares left",
+                property.financial_details.available_shares
+            );
+        }
+
+        // Clone price_per_share early to avoid borrowing issues later
+        let price_per_share = property.financial_details.price_per_share;
+        let total_cost = shares_to_buy * price_per_share;
+
+        // Update property shares and investors
+        property.financial_details.available_shares -= shares_to_buy;
+        let entry = property.investors.entry(buyer).or_insert(0);
+        *entry += shares_to_buy;
+
+        // Update user data
+        let user_data = state.all_users.entry(buyer).or_insert(UserData {
+            total_investment: 0,
+            current_value: 0,
+            monthly_income: 0,
+            total_return: 0,
+            user_registered_properties: vec![],
+            user_invested_properties: vec![],
+        });
+
+        user_data.total_investment += total_cost;
+        user_data.current_value += total_cost;
+
+        match user_data
+            .user_invested_properties
+            .iter_mut()
+            .find(|inv| inv.property_id == property_id)
+        {
+            Some(inv) => inv.shares_owned += shares_to_buy,
+            None => user_data.user_invested_properties.push(UserInvestment {
+                property_id,
+                shares_owned: shares_to_buy,
+            }),
+        };
+
+        // Save state
+        save_state(&state);
+
+        format!(
+            "Successfully bought {} shares of property {} for a total of {} tokens",
+            shares_to_buy,
+            property_id,
+            total_cost
+        )
+    })
+}
 
 

@@ -132,4 +132,6 @@ service : {
   get_all_leases : () -> (vec Lease) query;
 
   get_my_leases : () -> (vec Lease) query;
+
+  buy_share : (PropertyId, nat) -> (text);
 };
