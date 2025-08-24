@@ -41,11 +41,6 @@ Track invested properties with number of shares (get_user_invested_properties)
 Manage property investors and distribute ownership
 
 
-## NOTE : 
-
-This project doesn't render images from external links due to security policies. So you need to start it in frontend development server.
-
-
 ## Guide to setup
 
 Select the directory and run :
