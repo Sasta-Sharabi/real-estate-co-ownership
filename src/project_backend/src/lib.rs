@@ -545,3 +545,21 @@ pub fn get_user_invested_properties() -> Vec<UserInvestedProperty> {
 }
 
 
+#[ic_cdk::pre_upgrade]
+fn pre_upgrade() {
+    STATE.with(|s| {
+        let state = s.borrow();
+        save_state(&state);
+    });
+}
+
+
+#[ic_cdk::post_upgrade]
+fn post_upgrade() {
+    let (stored_state,): (StorageState,) =
+        ic_cdk::storage::stable_restore().expect("Failed to restore state from stable memory");
+    
+    STATE.with(|s| {
+        *s.borrow_mut() = stored_state;
+    });
+}
