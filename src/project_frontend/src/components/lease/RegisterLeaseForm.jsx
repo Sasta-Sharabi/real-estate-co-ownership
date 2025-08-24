@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { FileText, User, Calendar, DollarSign, MapPin } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, User, Calendar, DollarSign } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthProvider';
 
 const RegisterLeaseForm = () => {
+  const { callFunction } = useAuth(); 
   const [formData, setFormData] = useState({
     propertyId: '',
     tenantName: '',
@@ -14,22 +16,40 @@ const RegisterLeaseForm = () => {
     leaseTerms: '',
     specialConditions: ''
   });
-
+  const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Mock properties for selection
-  const mockProperties = [
-    { id: 1, title: 'Modern Downtown Apartment', address: '123 Main St, New York, NY' },
-    { id: 2, title: 'Commercial Office Space', address: '456 Business Ave, Los Angeles, CA' },
-    { id: 3, title: 'Luxury Beachfront Condo', address: '789 Ocean Dr, Miami, FL' }
-  ];
+  // Fetch all properties but exclude user-registered ones
+  useEffect(() => {
+    const fetchAvailableProperties = async () => {
+      if (!callFunction) return;
+
+      try {
+        const allProps = await callFunction.get_all_properties();
+        const userProps = await callFunction.get_user_registered_properties();
+
+        const userPropIds = userProps.map(p => Number(p.id));
+        const availableProps = allProps
+          .filter(p => !userPropIds.includes(Number(p.id)))
+          .map(p => ({
+            id: Number(p.id),
+            title: p.title,
+            address: p.address ? `${p.address.street}, ${p.address.city}` : 'No address'
+          }));
+
+        setProperties(availableProps);
+      } catch (err) {
+        console.error('Error fetching available properties:', err);
+        setProperties([]);
+      }
+    };
+
+    fetchAvailableProperties();
+  }, [callFunction]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -37,12 +57,24 @@ const RegisterLeaseForm = () => {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Lease registered:', formData);
-      alert('Lease registered successfully!');
-      
-      // Reset form
+      if (callFunction?.register_lease) {
+        // Call backend with ordered params (not object!)
+        await callFunction.register_lease(
+          Number(formData.propertyId),
+          formData.tenantName,
+          formData.tenantEmail,
+          formData.tenantPhone,
+          formData.leaseStartDate,
+          formData.leaseEndDate,
+          Number(formData.monthlyRent),
+          Number(formData.securityDeposit),
+          formData.leaseTerms,
+          formData.specialConditions
+        );
+        alert('Lease registered successfully!');
+      }
+
+      // reset form
       setFormData({
         propertyId: '',
         tenantName: '',
@@ -56,6 +88,7 @@ const RegisterLeaseForm = () => {
         specialConditions: ''
       });
     } catch (error) {
+      console.error(error);
       alert('Error registering lease. Please try again.');
     } finally {
       setLoading(false);
@@ -67,8 +100,7 @@ const RegisterLeaseForm = () => {
       const start = new Date(formData.leaseStartDate);
       const end = new Date(formData.leaseEndDate);
       const diffTime = Math.abs(end - start);
-      const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
-      return diffMonths;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30));
     }
     return 0;
   };
@@ -76,12 +108,9 @@ const RegisterLeaseForm = () => {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center space-x-2">
-            <FileText className="h-6 w-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-gray-900">Register New Lease</h2>
-          </div>
-          <p className="text-gray-600 mt-1">Create a new lease agreement for your property</p>
+        <div className="px-6 py-4 border-b border-gray-200 flex items-center space-x-2">
+          <FileText className="h-6 w-6 text-blue-600" />
+          <h2 className="text-2xl font-bold text-gray-900">Register New Lease</h2>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -98,27 +127,29 @@ const RegisterLeaseForm = () => {
               required
             >
               <option value="">Choose a property...</option>
-              {mockProperties.map(property => (
-                <option key={property.id} value={property.id}>
-                  {property.title} - {property.address}
+              {properties.length === 0 && <option disabled>No available properties</option>}
+              {properties.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.title} - {p.address}
                 </option>
               ))}
             </select>
           </div>
 
+          {/* Tenant Information, Lease Terms, Financial Terms, Lease Conditions ... remain the same */}
           {/* Tenant Information */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2 mb-2">
-              <User className="h-5 w-5 text-gray-500" />
-              <h3 className="text-lg font-medium text-gray-900">Tenant Information</h3>
-            </div>
+             <div className="space-y-4">
+               <div className="flex items-center space-x-2 mb-2">
+                 <User className="h-5 w-5 text-gray-500" />
+                 <h3 className="text-lg font-medium text-gray-900">Tenant Information</h3>
+               </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Tenant Name
-                </label>
-                <input
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                     Tenant Name
+                  </label>
+                   <input
                   type="text"
                   name="tenantName"
                   value={formData.tenantName}

@@ -66,11 +66,67 @@ type Property = record {
   owner : principal;
 };
 
+// ========== Lease Definitions ==========
+type LeaseStatus = variant {
+  Active;
+  Terminated;
+  Pending;
+};
+
+type Lease = record {
+  lease_id : LeaseId;
+  property_id : PropertyId;
+  tenant_name : text;
+  tenant_email : text;
+  tenant_phone : text;
+  lease_start_date : text;
+  lease_end_date : text;
+  monthly_rent : nat;
+  security_deposit : nat;
+  lease_terms : text;
+  special_conditions : text;
+  status : LeaseStatus;
+};
+
 // ========== Service ==========
 service : {
   register_user : () -> (text);
+
   get_user_data : () -> (UserData);
-  register_property : (text, text, text, text, nat64, text, nat, nat, nat, text, vec text, vec text, nat) -> (text);
+
+  register_property : (
+    text,      // title
+    text,      // street
+    text,      // city
+    text,      // state
+    nat64,     // zipcode
+    text,      // property type (string mapped to enum in Rust)
+    nat,       // total_property_value
+    nat,       // available_shares
+    nat,       // price_per_share
+    text,      // property_description
+    vec text,  // amenities
+    vec text,  // images
+    nat        // monthly_rent
+  ) -> (text);
+
   get_all_properties : () -> (vec Property) query;
+
   get_user_registered_properties : () -> (vec Property) query;
+
+  // ===== Lease APIs =====
+  register_lease : (
+    PropertyId,
+    text, // tenant_name
+    text, // tenant_email
+    text, // tenant_phone
+    text, // lease_start_date
+    text, // lease_end_date
+    nat,  // monthly_rent
+    nat,  // security_deposit
+    text, // lease_terms
+    text  // special_conditions
+  ) -> (text);
+
+  get_all_leases : () -> (vec Lease) query;
 };

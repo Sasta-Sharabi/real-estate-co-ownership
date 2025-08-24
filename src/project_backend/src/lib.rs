@@ -5,6 +5,8 @@ use ic_cdk::{storage, caller};
 use std::cell::RefCell;
 
 pub type PropertyId = u128;
+pub type Timestamp = u64;
+pub type LeaseId = u128;
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
 pub struct UserInvestment {
@@ -26,6 +28,7 @@ pub struct UserData {
 pub struct StorageState {
     pub all_users: HashMap<Principal, UserData>,
     pub all_properties: Vec<Property>,
+    pub all_leases: Vec<Lease>,
 }
 
 thread_local! {
@@ -335,3 +338,86 @@ pub fn get_user_registered_properties() -> Vec<Property> {
         }
     })
 }
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
+pub struct Lease {
+    pub lease_id: LeaseId,
+    pub property_id: PropertyId,
+    pub tenant_name: String,
+    pub tenant_email: String,
+    pub tenant_phone: String,
+    pub lease_start_date: String,
+    pub lease_end_date: String,
+    pub monthly_rent: u128,
+    pub security_deposit: u128,
+    pub lease_terms: String,
+    pub special_conditions: String,
+    pub status: LeaseStatus,
+}
+
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
+pub enum LeaseStatus {
+    Active,
+    Terminated,
+    Pending,
+}
+
+impl Default for LeaseStatus {
+    fn default() -> Self {
+        LeaseStatus::Pending
+    }
+}
+
+#[ic_cdk::update]
+pub fn register_lease(
+    property_id: PropertyId,
+    tenant_name: String,
+    tenant_email: String,
+    tenant_phone: String,
+    lease_start_date: String,
+    lease_end_date: String,
+    monthly_rent: u128,
+    security_deposit: u128,
+    lease_terms: String,
+    special_conditions: String,
+) -> String {
+    STATE.with(|s| {
+        let mut state = s.borrow_mut();
+
+        // Check property exists
+        if !state.all_properties.iter().any(|p| p.id == property_id) {
+            return "Property not found".to_string();
+        }
+
+        let lease_id = state.all_leases.len() as u128 + 1;
+
+        let lease = Lease {
+            lease_id,
+            property_id,
+            tenant_name,
+            tenant_email,
+            tenant_phone,
+            lease_start_date,
+            lease_end_date,
+            monthly_rent,
+            security_deposit,
+            lease_terms,
+            special_conditions,
+            status: LeaseStatus::Active,
+        };
+
+        state.all_leases.push(lease);
+        save_state(&state);
+
+        format!("Lease registered successfully with id: {}", lease_id)
+    })
+}
+
+#[ic_cdk::query]
+pub fn get_all_leases() -> Vec<Lease> {
+    STATE.with(|s| {
+        s.borrow().all_leases.clone()
+    })
+}
+
+
