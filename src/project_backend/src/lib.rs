@@ -344,6 +344,7 @@ pub struct Lease {
     pub lease_id: LeaseId,
     pub property_id: PropertyId,
     pub tenant_name: String,
+    pub tenant: Principal,
     pub tenant_email: String,
     pub tenant_phone: String,
     pub lease_start_date: String,
@@ -381,19 +382,18 @@ pub fn register_lease(
     lease_terms: String,
     special_conditions: String,
 ) -> String {
+    let caller_principal = caller(); 
+
     STATE.with(|s| {
         let mut state = s.borrow_mut();
 
-        // Check property exists
-        if !state.all_properties.iter().any(|p| p.id == property_id) {
-            return "Property not found".to_string();
-        }
-
+        // Generate next sequential lease ID based on current number of leases
         let lease_id = state.all_leases.len() as u128 + 1;
 
         let lease = Lease {
             lease_id,
             property_id,
+            tenant: caller_principal, 
             tenant_name,
             tenant_email,
             tenant_phone,
@@ -407,11 +407,11 @@ pub fn register_lease(
         };
 
         state.all_leases.push(lease);
-        save_state(&state);
 
-        format!("Lease registered successfully with id: {}", lease_id)
+        format!("Lease registered with ID: {}", lease_id)
     })
 }
+
 
 #[ic_cdk::query]
 pub fn get_all_leases() -> Vec<Lease> {
@@ -419,5 +419,22 @@ pub fn get_all_leases() -> Vec<Lease> {
         s.borrow().all_leases.clone()
     })
 }
+
+#[ic_cdk::query]
+pub fn get_my_leases() -> Vec<Lease> {
+    let user = caller();
+
+    STATE.with(|s| {
+        let state = s.borrow();
+
+        state
+            .all_leases
+            .iter()
+            .filter(|l| l.tenant == user)   // filter by tenant principal
+            .cloned()
+            .collect()
+    })
+}
+
 
 

@@ -76,6 +76,7 @@ type LeaseStatus = variant {
 type Lease = record {
   lease_id : LeaseId;
   property_id : PropertyId;
+  tenant : principal;
   tenant_name : text;
   tenant_email : text;
   tenant_phone : text;
@@ -100,7 +101,7 @@ service : {
     text,      // city
     text,      // state
     nat64,     // zipcode
-    text,      // property type (string mapped to enum in Rust)
+    text,      // property type
     nat,       // total_property_value
     nat,       // available_shares
     nat,       // price_per_share
@@ -129,4 +130,6 @@ service : {
   ) -> (text);
 
   get_all_leases : () -> (vec Lease) query;
+
+  get_my_leases : () -> (vec Lease) query;
 };
