@@ -1,27 +1,26 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-  Building, 
-  MapPin, 
-  DollarSign, 
-  Users, 
-  Calendar, 
-  ArrowLeft, 
-  Share2, 
-  Heart 
+import {
+  Building,
+  MapPin,
+  DollarSign,
+  Users,
+  Calendar,
+  ArrowLeft,
+  Share2,
+  Heart
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthProvider';
 
 const PropertyDetails = () => {
-  const { callFunction } = useAuth();
+  const { callFunction, isAuth, login } = useAuth();
   const { id } = useParams();
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [shareAmount, setShareAmount] = useState(1);
 
-  // Normalize backend object → frontend-friendly shape
+  // Normalize backend object 
   const normalizeProperty = (prop) => {
     // extract property type key from {Residential: null}
     const propertyType = prop.property_type
@@ -51,13 +50,13 @@ const PropertyDetails = () => {
       bedrooms: prop.bedrooms ? Number(prop.bedrooms) : "N/A",
       bathrooms: prop.bathrooms ? Number(prop.bathrooms) : "N/A",
       description: prop.property_description || "No description provided.",
-      images: prop.images && prop.images.length > 0 
-        ? prop.images 
+      images: prop.images && prop.images.length > 0
+        ? prop.images
         : ["/building.png", "/popular.png", "/residential.png"],
       amenities,
       financials: {
         monthlyIncome: Number(prop.monthly_rent ?? 0),
-        monthlyExpenses: 0, // not provided by backend
+        monthlyExpenses: 0,
         netMonthlyIncome: Number(prop.monthly_rent ?? 0) - 0,
         annualReturn: prop.financial_details?.total_property_value
           ? ((Number(prop.monthly_rent ?? 0) * 12) / Number(prop.financial_details.total_property_value) * 100).toFixed(2)
@@ -104,18 +103,14 @@ const PropertyDetails = () => {
     }
 
     try {
-      // Call the backend function
       const result = await callFunction.buy_share(property.id, BigInt(shareAmount));
-      
-      // Show backend response
       alert(result);
 
-      // Refresh property to update available shares
       const allProps = await callFunction.get_all_properties();
       const updatedProperty = allProps.find((p) => Number(p.id) === Number(property.id));
       if (updatedProperty) {
         setProperty(normalizeProperty(updatedProperty));
-        setShareAmount(1); // reset input
+        setShareAmount(1);
       }
     } catch (err) {
       console.error("❌ Error buying shares:", err);
@@ -128,6 +123,8 @@ const PropertyDetails = () => {
     return <div className="max-w-7xl mx-auto p-6">Loading...</div>;
   }
 
+
+
   if (!property) {
     return (
       <div className="max-w-7xl mx-auto p-6 text-center">
@@ -135,6 +132,21 @@ const PropertyDetails = () => {
         <Link to="/properties" className="text-blue-600 hover:text-blue-700">
           Back to Properties
         </Link>
+      </div>
+    );
+  }
+
+  if (!isAuth) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Login Required</h1>
+        <p className="text-gray-600 mb-6">Please log in to invest in property.</p>
+        <button
+          onClick={login}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+        >
+          Login
+        </button>
       </div>
     );
   }
@@ -158,9 +170,8 @@ const PropertyDetails = () => {
               <button
                 key={index}
                 onClick={() => setSelectedImage(index)}
-                className={`h-20 w-28 flex-shrink-0 rounded-lg overflow-hidden border-2 ${
-                  selectedImage === index ? "border-blue-600" : "border-transparent"
-                }`}
+                className={`h-20 w-28 flex-shrink-0 rounded-lg overflow-hidden border-2 ${selectedImage === index ? "border-blue-600" : "border-transparent"
+                  }`}
               >
                 <img src={img} alt="" className="w-full h-full object-cover" />
               </button>

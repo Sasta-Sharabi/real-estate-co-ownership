@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Building, MapPin, Eye, Filter } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthProvider'; // adjust import path if different
+import { useAuth } from '../../contexts/AuthProvider';
 
 const PropertyList = () => {
   const [properties, setProperties] = useState([]);
@@ -40,7 +40,7 @@ const PropertyList = () => {
       monthlyRent: toNum(p.monthly_rent),
       images: p.images && p.images.length > 0 ? p.images : ['/building.png'],
       amenities: p.amenities ? p.amenities.map(a => Object.keys(a)[0]) : [],
-      createdAt: new Date().toISOString(), // backend doesn’t provide createdAt yet
+      createdAt: new Date().toISOString(),
     };
   };
 
@@ -123,7 +123,7 @@ const PropertyList = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Available Properties</h1>
           <p className="text-gray-600">Discover co-ownership investment opportunities</p>
         </div>
-        
+
         <Link
           to="/properties/register"
           className="mt-4 md:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center space-x-2"
@@ -186,7 +186,7 @@ const PropertyList = () => {
 
             <div className="p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-2">{property.title}</h3>
-              
+
               <div className="flex items-center text-gray-600 mb-3">
                 <MapPin className="h-4 w-4 mr-1" />
                 <span className="text-sm">{property.address}</span>
@@ -197,7 +197,7 @@ const PropertyList = () => {
                   <span className="text-sm text-gray-600">Total Value:</span>
                   <span className="font-semibold">${property.totalValue.toLocaleString()}</span>
                 </div>
-                
+
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-600">Price per Share:</span>
                   <span className="font-semibold">${property.pricePerShare.toLocaleString()}</span>

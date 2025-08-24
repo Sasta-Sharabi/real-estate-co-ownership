@@ -1,23 +1,25 @@
-// ========== Type Definitions ==========
+// ==================== Type Aliases ====================
 type PropertyId = nat;
 type Timestamp = nat64;
 type LeaseId = nat;
 type PaymentId = nat;
 
+// ==================== User-related Types ====================
 type UserInvestment = record {
-  property_id : PropertyId;
-  shares_owned : nat;
+  property_id : PropertyId;  // ID of the property invested in
+  shares_owned : nat;         // Number of shares owned
 };
 
 type UserData = record {
-  total_investment : nat;
-  current_value : nat;
-  monthly_income : nat;
-  total_return : nat;
-  user_registered_properties : vec PropertyId;
-  user_invested_properties : vec UserInvestment;
+  total_investment : nat;                   // Total amount invested
+  current_value : nat;                      // Current value of investment
+  monthly_income : nat;                     // Income per month from properties
+  total_return : nat;                       // Total returns earned
+  user_registered_properties : vec PropertyId; // IDs of properties registered by the user
+  user_invested_properties : vec UserInvestment; // Investments in other properties
 };
 
+// ==================== Property-related Types ====================
 type PropertyAddress = record {
   street : text;
   city : text;
@@ -26,11 +28,12 @@ type PropertyAddress = record {
 };
 
 type PropertyFinancialDetails = record {
-  total_property_value : nat;
-  available_shares : nat;
-  price_per_share : nat;
+  total_property_value : nat;  // Total value of the property
+  available_shares : nat;      // Shares available for investment
+  price_per_share : nat;       // Price per share
 };
 
+// Property types
 type PropertyType = variant {
   Residential;
   Industrial;
@@ -38,6 +41,7 @@ type PropertyType = variant {
   MixedUse;
 };
 
+// Amenities available in properties
 type Amenity = variant {
   Parking;
   Pool;
@@ -51,22 +55,23 @@ type Amenity = variant {
   Storage;
 };
 
+// Main property record
 type Property = record {
-  id : PropertyId;
-  title : text;
-  property_type : PropertyType;
-  address : PropertyAddress;
-  financial_details : PropertyFinancialDetails;
-  property_description : text;
-  amenities : vec Amenity;
-  images : vec text;
-  monthly_rent : nat;
-  collected_rent : nat;
-  investors : vec record { principal; nat };
-  owner : principal;
+  id : PropertyId;                        // Unique property ID
+  title : text;                            // Property title
+  property_type : PropertyType;           // Type of property
+  address : PropertyAddress;              // Address details
+  financial_details : PropertyFinancialDetails; // Financial info
+  property_description : text;            // Description of property
+  amenities : vec Amenity;                // List of amenities
+  images : vec text;                      // URLs or paths of images
+  monthly_rent : nat;                     // Base monthly rent
+  collected_rent : nat;                   // Accumulated rent awaiting distribution
+  investors : vec record { principal; nat }; // List of investors and shares owned
+  owner : principal;                      // Owner of the property
 };
 
-// ========== Lease Definitions ==========
+// ==================== Lease-related Types ====================
 type LeaseStatus = variant {
   Active;
   Terminated;
@@ -74,32 +79,35 @@ type LeaseStatus = variant {
 };
 
 type Lease = record {
-  lease_id : LeaseId;
-  property_id : PropertyId;
-  tenant : principal;
-  tenant_name : text;
-  tenant_email : text;
-  tenant_phone : text;
-  lease_start_date : text;
-  lease_end_date : text;
-  monthly_rent : nat;
-  security_deposit : nat;
-  lease_terms : text;
-  special_conditions : text;
-  status : LeaseStatus;
+  lease_id : LeaseId;          // Unique lease ID
+  property_id : PropertyId;    // ID of the leased property
+  tenant : principal;          // Principal of tenant
+  tenant_name : text;          // Name of tenant
+  tenant_email : text;         // Email of tenant
+  tenant_phone : text;         // Phone number of tenant
+  lease_start_date : text;     // Lease start date
+  lease_end_date : text;       // Lease end date
+  monthly_rent : nat;          // Monthly rent amount
+  security_deposit : nat;      // Security deposit amount
+  lease_terms : text;          // Lease terms
+  special_conditions : text;   // Any special conditions
+  status : LeaseStatus;        // Current lease status
 };
 
+// ==================== User Investment View ====================
 type UserInvestedProperty = record {
-  property : Property;
-  shares_owned : nat;
+  property : Property;   // The property invested in
+  shares_owned : nat;    // Number of shares owned by the user
 };
 
-// ========== Service ==========
+// ==================== Service Definition ====================
 service : {
-  register_user : () -> (text);
 
-  get_user_data : () -> (UserData);
+  // -------- User Methods --------
+  register_user : () -> (text);         // Register a new user
+  get_user_data : () -> (UserData);     // Fetch data for caller
 
+  // -------- Property Methods --------
   register_property : (
     text,      // title
     text,      // street
@@ -116,11 +124,10 @@ service : {
     nat        // monthly_rent
   ) -> (text);
 
-  get_all_properties : () -> (vec Property) query;
-
-  get_user_registered_properties : () -> (vec Property) query;
-
-  // ===== Lease APIs =====
+  get_all_properties : () -> (vec Property) query; // Get all properties
+  get_user_registered_properties : () -> (vec Property) query; // Properties registered by caller
+  
+  // -------- Lease Methods --------
   register_lease : (
     PropertyId,
     text, // tenant_name
@@ -134,11 +141,10 @@ service : {
     text  // special_conditions
   ) -> (text);
 
-  get_all_leases : () -> (vec Lease) query;
+  get_all_leases : () -> (vec Lease) query; // All leases in the system
+  get_my_leases : () -> (vec Lease) query;  // Leases where caller is tenant
 
-  get_my_leases : () -> (vec Lease) query;
-
-  // ===== Investment APIs =====
-  buy_share : (PropertyId, nat) -> (text);
-  get_user_invested_properties : () -> (vec UserInvestedProperty) query;
+  // -------- Investment Methods --------
+  buy_share : (PropertyId, nat) -> (text); // Buy shares in a property
+  get_user_invested_properties : () -> (vec UserInvestedProperty) query; // View investments
 };

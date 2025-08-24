@@ -3,7 +3,7 @@ import { Building, MapPin, DollarSign, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthProvider';
 
 const RegisterPropertyForm = () => {
-  const { callFunction } = useAuth();
+  const { callFunction, isAuth, login } = useAuth();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -116,6 +116,21 @@ const RegisterPropertyForm = () => {
       setLoading(false);
     }
   };
+
+  if (!isAuth) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Login Required</h1>
+        <p className="text-gray-600 mb-6">Please log in to register a property.</p>
+        <button
+          onClick={login}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+        >
+          Login
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">

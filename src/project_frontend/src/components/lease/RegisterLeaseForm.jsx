@@ -3,7 +3,7 @@ import { FileText, User, Calendar, DollarSign } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthProvider';
 
 const RegisterLeaseForm = () => {
-  const { callFunction } = useAuth(); 
+  const { callFunction, isAuth, login } = useAuth();
   const [formData, setFormData] = useState({
     propertyId: '',
     tenantName: '',
@@ -18,6 +18,7 @@ const RegisterLeaseForm = () => {
   });
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(false);
+
 
   // Fetch all properties but exclude user-registered ones
   useEffect(() => {
@@ -58,7 +59,6 @@ const RegisterLeaseForm = () => {
 
     try {
       if (callFunction?.register_lease) {
-        // Call backend with ordered params (not object!)
         await callFunction.register_lease(
           Number(formData.propertyId),
           formData.tenantName,
@@ -105,6 +105,21 @@ const RegisterLeaseForm = () => {
     return 0;
   };
 
+  if (!isAuth) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4">Login Required</h1>
+        <p className="text-gray-600 mb-6">Please log in to register a lease.</p>
+        <button
+          onClick={login}
+          className="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700 transition"
+        >
+          Login
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white rounded-lg shadow-lg">
@@ -136,20 +151,19 @@ const RegisterLeaseForm = () => {
             </select>
           </div>
 
-          {/* Tenant Information, Lease Terms, Financial Terms, Lease Conditions ... remain the same */}
           {/* Tenant Information */}
-             <div className="space-y-4">
-               <div className="flex items-center space-x-2 mb-2">
-                 <User className="h-5 w-5 text-gray-500" />
-                 <h3 className="text-lg font-medium text-gray-900">Tenant Information</h3>
-               </div>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <User className="h-5 w-5 text-gray-500" />
+              <h3 className="text-lg font-medium text-gray-900">Tenant Information</h3>
+            </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 <div>
-                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                     Tenant Name
-                  </label>
-                   <input
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tenant Name
+                </label>
+                <input
                   type="text"
                   name="tenantName"
                   value={formData.tenantName}
