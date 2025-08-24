@@ -89,6 +89,11 @@ type Lease = record {
   status : LeaseStatus;
 };
 
+type UserInvestedProperty = record {
+  property : Property;
+  shares_owned : nat;
+};
+
 // ========== Service ==========
 service : {
   register_user : () -> (text);
@@ -133,5 +138,7 @@ service : {
 
   get_my_leases : () -> (vec Lease) query;
 
+  // ===== Investment APIs =====
   buy_share : (PropertyId, nat) -> (text);
+  get_user_invested_properties : () -> (vec UserInvestedProperty) query;
 };

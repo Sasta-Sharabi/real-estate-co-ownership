@@ -509,3 +509,39 @@ pub fn buy_share(property_id: PropertyId, shares_to_buy: u128) -> String {
 }
 
 
+#[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
+pub struct UserInvestedProperty {
+    pub property: Property,
+    pub shares_owned: u128,
+}
+
+#[ic_cdk::query]
+pub fn get_user_invested_properties() -> Vec<UserInvestedProperty> {
+    let user = caller();
+
+    STATE.with(|s| {
+        let state = s.borrow();
+
+        // Get user data
+        if let Some(user_data) = state.all_users.get(&user) {
+            user_data
+                .user_invested_properties
+                .iter()
+                .filter_map(|investment| {
+                    // Find the property by ID
+                    state.all_properties
+                        .iter()
+                        .find(|p| p.id == investment.property_id)
+                        .map(|property| UserInvestedProperty {
+                            property: property.clone(),
+                            shares_owned: investment.shares_owned,
+                        })
+                })
+                .collect()
+        } else {
+            vec![]
+        }
+    })
+}
+
+
