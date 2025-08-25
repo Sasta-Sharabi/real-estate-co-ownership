@@ -118,6 +118,9 @@ const SummaryCard = ({ title, value, icon: Icon, color, isPercentage }) => (
         <p className={`text-2xl font-bold ${isPercentage ? color : 'text-gray-900'}`}>
           {isPercentage ? value : `$${Number(value).toLocaleString()}`}
         </p>
+        {title === "Total Return" && (
+          <p className="text-xs text-gray-500 mt-1">(Coming Soon)</p>
+        )}
       </div>
       <Icon className={`h-8 w-8 ${color}`} />
     </div>

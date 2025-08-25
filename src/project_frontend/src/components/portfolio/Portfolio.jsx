@@ -160,15 +160,22 @@ const Portfolio = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600 mb-1">Total Return</p>
-              <p className={`text-2xl font-bold ${getReturnColor(summaryData.returnPercentage)}`}>${summaryData.totalReturn.toLocaleString()}</p>
+              <p className={`text-2xl font-bold ${getReturnColor(summaryData.returnPercentage)}`}>
+                ${summaryData.totalReturn.toLocaleString()}
+              </p>
               <p className={`text-sm ${getReturnColor(summaryData.returnPercentage)} flex items-center`}>
                 {React.createElement(getReturnIcon(summaryData.returnPercentage), { className: "h-4 w-4 mr-1" })}
                 {summaryData.returnPercentage}%
+              </p>
+              {/* 📌 Added subtle description */}
+              <p className="text-xs text-gray-500 mt-1">
+                Based on rental income & appreciation (coming soon).
               </p>
             </div>
             <TrendingUp className="h-8 w-8 text-green-600" />
           </div>
         </div>
+
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -186,7 +193,17 @@ const Portfolio = () => {
           <h2 className="text-xl font-semibold text-gray-900">Performance Overview</h2>
           <PieChart className="h-6 w-6 text-gray-500" />
         </div>
-        <p className="text-gray-500">No performance data available yet.</p>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start space-x-3">
+          <svg className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L4.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div className="text-left">
+            <p className="text-sm text-yellow-700">
+              Performance charts and analytics are not built yet. This section is under development.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* My Investments */}
@@ -235,13 +252,51 @@ const Portfolio = () => {
         <div className="p-6 space-y-6">
           {leases.length > 0 ? (
             leases.map(lease => (
-              <div key={lease.lease_id} className="border border-gray-200 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Lease #{lease.lease_id} — Property #{lease.property_id}</h3>
-                <p className="text-sm text-gray-600 mb-1"><strong>Tenant:</strong> {lease.tenant_name}</p>
-                <p className="text-sm text-gray-600 mb-1"><strong>Lease Start:</strong> {lease.lease_start_date}</p>
-                <p className="text-sm text-gray-600 mb-1"><strong>Lease End:</strong> {lease.lease_end_date}</p>
-                <p className="text-sm text-gray-600 mb-1"><strong>Monthly Rent:</strong> ${lease.monthly_rent}</p>
-                <p className="text-sm text-gray-600"><strong>Status:</strong> {lease.status}</p>
+              <div 
+                key={lease.lease_id} 
+                className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition bg-gray-50"
+              >
+                {/* Header with Lease ID + Status */}
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-5">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Lease #{lease.lease_id}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Property ID: <span className="font-medium text-gray-700">{lease.property_id}</span>
+                    </p>
+                  </div>
+                  <span 
+                    className={`px-3 py-1 rounded-full text-xs font-medium mt-2 md:mt-0 ${
+                      lease.status === "Active" 
+                        ? "bg-green-100 text-green-700" 
+                        : lease.status === "Pending"
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-gray-200 text-gray-700"
+                    }`}
+                  >
+                    {lease.status}
+                  </span>
+                </div>
+
+                {/* Lease Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                  {/* Tenant Info */}
+                  <div className="space-y-2">
+                    <p className="text-gray-500 text-xs uppercase tracking-wide">Tenant</p>
+                    <p className="font-medium text-gray-900">{lease.tenant_name}</p>
+                    <p className="text-gray-700">{lease.tenant_email}</p>
+                    <p className="text-gray-700">{lease.tenant_phone}</p>
+                  </div>
+
+                  {/* Lease Terms */}
+                  <div className="space-y-2">
+                    <p className="text-gray-500 text-xs uppercase tracking-wide">Lease Terms</p>
+                    <p><span className="text-gray-600">Start:</span> <span className="font-medium text-gray-900">{lease.lease_start_date}</span></p>
+                    <p><span className="text-gray-600">End:</span> <span className="font-medium text-gray-900">{lease.lease_end_date}</span></p>
+                    <p><span className="text-gray-600">Monthly Rent:</span> <span className="font-medium text-gray-900">${lease.monthly_rent}</span></p>
+                  </div>
+                </div>
               </div>
             ))
           ) : (
@@ -249,6 +304,8 @@ const Portfolio = () => {
           )}
         </div>
       </div>
+
+
     </div>
   );
 };
